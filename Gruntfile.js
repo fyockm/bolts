@@ -1,7 +1,3 @@
-var exec = require('child_process').exec;
-
-var BIN = './node_modules/.bin/';
-
 module.exports = function(grunt) {
 
 	// Project configuration.
@@ -23,8 +19,15 @@ module.exports = function(grunt) {
 		clean: {
 			src: ['tmp']
 		},
-		istanbul: {
-			src: ['test/**/*_test.js']
+		mocha_istanbul: {
+			coverage: {
+				src: 'test',
+				options: {
+					mask: '**/*_test.js',
+					reportFormats: ['html'],
+					reporter: 'min'
+				}
+			}
 		}
 	});
 
@@ -32,27 +35,10 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-mocha-test');
 	grunt.loadNpmTasks('grunt-contrib-jshint');
 	grunt.loadNpmTasks('grunt-contrib-clean');
-
-	// Register tasks
-	grunt.registerMultiTask('istanbul', 'generate test coverage report', function() {
-		var done = this.async(),
-			cmd = BIN + 'istanbul cover --report html ' + BIN + '_mocha -- -R min ' +
-				this.filesSrc.reduce(function(p,c) { return (p || '') + ' "' + c + '" '; });
-
-		grunt.log.debug(cmd);
-		exec(cmd, function(err, stdout, stderr) {
-			if (err) { grunt.fail.fatal(err); }
-			if (/No coverage information was collected/.test(stderr)) {
-				grunt.fail.warn('No coverage information was collected. Report not generated.');
-			} else {
-				grunt.log.ok('test coverage report generated to "./coverage/index.html"');
-			}
-			done();
-		});
-	});
+	grunt.loadNpmTasks('grunt-mocha-istanbul');
 
 	grunt.registerTask('test', ['mochaTest', 'clean']);
-	grunt.registerTask('coverage', ['istanbul', 'clean']);
+	grunt.registerTask('coverage', ['mocha_istanbul', 'clean']);
 	grunt.registerTask('default', ['jshint', 'mochaTest', 'clean']);
 
 };
